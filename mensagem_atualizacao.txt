@@ -1,1 +1,1 @@
-Fix: torna a calculadora a pagina principal (index.html) e salva o site antigo como site-antigo.html
+Fix: desativa o site antigo renomeando para site-antigo.txt para que nao funcione online
