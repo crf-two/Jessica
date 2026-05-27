@@ -1,1 +1,0 @@
-Fix: remove todos os arquivos e pastas relacionados ao site antigo, mantendo apenas a calculadora
