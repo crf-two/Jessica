@@ -1,1 +1,1 @@
-Fix: desativa o site antigo renomeando para site-antigo.txt para que nao funcione online
+Fix: remove todos os arquivos e pastas relacionados ao site antigo, mantendo apenas a calculadora
