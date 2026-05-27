@@ -1,1 +1,1 @@
-Fix: remove as linhas coloridas de eixos de referencia (AxesHelper) do simulador 3D
+Fix: torna a calculadora a pagina principal (index.html) e salva o site antigo como site-antigo.html
