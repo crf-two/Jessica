@@ -1,1 +1,1 @@
-Fix: adiciona degradê de transição em TODAS as seções para eliminar quebras bruscas de cor entre seções.
+Fix: remove as linhas coloridas de eixos de referencia (AxesHelper) do simulador 3D

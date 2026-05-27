@@ -194,9 +194,9 @@ function init3D() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     
-    // Eixos para referência
-    const axesHelper = new THREE.AxesHelper(1000);
-    scene.add(axesHelper);
+    // Eixos para referência (removidos)
+    // const axesHelper = new THREE.AxesHelper(1000);
+    // scene.add(axesHelper);
     
     animate();
 }
