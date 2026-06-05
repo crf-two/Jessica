@@ -420,7 +420,7 @@ function singlePacking(items, cW, cH, cD, maxWeight, sortFunc, splitAxis = 0) {
     
     for(const item of localItems) {
         if(currentWeight + item.weight > maxWeight) {
-            failedItems.push({ name: item.name, color: item.color, reason: 'weight' });
+            failedItems.push({ name: item.name, color: item.color, reason: 'weight', weight: item.weight });
             continue; 
         }
 
@@ -493,7 +493,7 @@ function singlePacking(items, cW, cH, cD, maxWeight, sortFunc, splitAxis = 0) {
                 }
             }
         } else {
-            failedItems.push({ name: item.name, color: item.color, reason: 'space' });
+            failedItems.push({ name: item.name, color: item.color, reason: 'space', weight: item.weight });
         }
     }
 
@@ -614,12 +614,12 @@ function runPacking(showAlerts = false) {
             if (warningContent) warningContent.style.display = 'block';
             warningList.innerHTML = '';
             
-            // Agrupar falhas por nome do item, cor e motivo
+            // Agrupar falhas por nome do item, cor, motivo e peso
             const summaryMap = {};
             for (const f of failedItems) {
                 const key = `${f.name}|${f.color}|${f.reason}`;
                 if (!summaryMap[key]) {
-                    summaryMap[key] = { name: f.name, color: f.color, reason: f.reason, count: 0 };
+                    summaryMap[key] = { name: f.name, color: f.color, reason: f.reason, count: 0, weight: f.weight };
                 }
                 summaryMap[key].count++;
             }
@@ -634,10 +634,22 @@ function runPacking(showAlerts = false) {
                 colorDot.style.backgroundColor = f.color;
                 tdColor.appendChild(colorDot);
                 
-                // Coluna Item
+                // Coluna Item com sub-label do peso
                 const tdName = document.createElement('td');
-                tdName.textContent = f.name;
-                tdName.style.fontWeight = '500';
+                const nameText = document.createElement('span');
+                nameText.textContent = f.name;
+                nameText.style.display = 'block';
+                nameText.style.fontWeight = '500';
+                
+                const weightSub = document.createElement('span');
+                weightSub.style.fontSize = '0.75rem';
+                weightSub.style.color = 'var(--text-muted)';
+                const unitWStr = Math.round(f.weight).toLocaleString('pt-BR');
+                const totalWStr = Math.round(f.weight * f.count).toLocaleString('pt-BR');
+                weightSub.textContent = `${unitWStr} kg cada (Total: ${totalWStr} kg)`;
+                
+                tdName.appendChild(nameText);
+                tdName.appendChild(weightSub);
                 
                 // Coluna Qtd
                 const tdCount = document.createElement('td');
@@ -679,17 +691,21 @@ function runPacking(showAlerts = false) {
         const currentWStr = Math.round(currentWeight).toLocaleString('pt-BR');
         const maxWStr = Math.round(maxWeight).toLocaleString('pt-BR');
         
+        let totalFailedW = 0;
+        failedItems.forEach(f => totalFailedW += f.weight);
+        const totalFailedWStr = Math.round(totalFailedW).toLocaleString('pt-BR');
+        
         if (isWeightSaturated) {
             document.getElementById('stat-weight').textContent = `${currentWStr} kg / ${maxWStr} kg (${percentageText} - Ocupação Total)`;
             if (warningNotice) {
                 warningNotice.style.display = 'flex';
-                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Ocupação total de peso (${currentWStr} kg de ${maxWStr} kg)!`;
+                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Ocupação total de peso (${currentWStr} kg de ${maxWStr} kg) | Sobrou +${totalFailedWStr} kg!`;
             }
         } else {
             document.getElementById('stat-weight').textContent = `${currentWStr} kg / ${maxWStr} kg (${percentageText} - Saturado)`;
             if (warningNotice) {
                 warningNotice.style.display = 'flex';
-                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Limite de peso atingido (${currentWStr} kg de ${maxWStr} kg)!`;
+                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Limite de peso atingido (${currentWStr} kg de ${maxWStr} kg) | Sobrou +${totalFailedWStr} kg!`;
             }
         }
     } else {
