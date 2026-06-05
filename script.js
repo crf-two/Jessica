@@ -291,7 +291,7 @@ addCargoBtn.addEventListener('click', () => {
         chosenColor = colorblindPalette[currentCount % colorblindPalette.length];
     }
     
-    addCargoItem('', 100, 100, 100, 10, 50, true, true, chosenColor);
+    addCargoItem('', '', '', '', '', '', true, true, chosenColor);
     liveUpdate();
 });
 
