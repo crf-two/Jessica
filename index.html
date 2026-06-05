@@ -31,22 +31,37 @@
                     </div>
                     <div class="card-body">
                         <div class="vehicle-selector">
-                            <div class="vehicle-option active" data-type="container">
-                                <img src="https://packer.searates.com/images/main-container.png" alt="Container">
-                                <span>Container</span>
-                            </div>
-                            <div class="vehicle-option" data-type="truck">
+                            <div class="vehicle-option active" data-type="truck">
                                 <img src="https://packer.searates.com/images/main-truck.png" alt="Truck">
                                 <span>Truck</span>
+                            </div>
+                            <div class="vehicle-option" data-type="container">
+                                <img src="https://packer.searates.com/images/main-container.png" alt="Container">
+                                <span>Container</span>
                             </div>
                         </div>
 
                         <div class="form-group" id="containerPresetsWrapper">
                             <label>Selecione o Container</label>
                             <select id="containerSelect" class="input-modern">
+                                <option value="custom">-- Personalizado (Digitação Manual) --</option>
                                 <option value="20ft">Container 20' Standard</option>
                                 <option value="40ft">Container 40' Standard</option>
                                 <option value="40hc">Container 40' High Cube</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="truckPresetsWrapper" style="display: none;">
+                            <label>Selecione o Veículo (Placa / Modelo)</label>
+                            <select id="truckSelect" class="input-modern">
+                                <option value="custom">-- Personalizado (Digitação Manual) --</option>
+                                <option value="fiorino">SDV-3C69 / FIORINO (1,70 x 1,05 x 1,05)</option>
+                                <option value="van">SFB-3H39 / VAN (3,40 x 1,80 x 1,75)</option>
+                                <option value="vuc">ASV-9720 / VUC (4,40 x 2,05 x 2,14)</option>
+                                <option value="3_4_bau">APF-3H03 / 3/4 BAÚ (6,10 x 2,20 x 2,24)</option>
+                                <option value="toco_sider">AVX-3931 / TOCO SIDER (6,50 x 2,50 x 2,90)</option>
+                                <option value="toco_bau">AXF-9A45 / TOCO BAÚ (8,10 x 2,50 x 2,60)</option>
+                                <option value="truck_sider">ATX-1H45 TRUCK SIDER (10,30 x 2,50 x 3,00)</option>
                             </select>
                         </div>
 
@@ -84,9 +99,12 @@
                 </section>
             </div>
             
-            <div class="sidebar-footer">
+            <div class="sidebar-footer grid-2col">
+                <button id="clearBtn" class="btn btn-secondary w-100">
+                    <i class="fa-solid fa-trash-can"></i> Limpar Tudo
+                </button>
                 <button id="calculateBtn" class="btn btn-primary w-100 btn-glow">
-                    <i class="fa-solid fa-play"></i> Calcular Estufagem
+                    <i class="fa-solid fa-play"></i> Calcular
                 </button>
             </div>
         </aside>
@@ -107,7 +125,7 @@
                         <strong id="stat-vol">0.00%</strong>
                     </div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" id="stat-box-weight">
                     <i class="fa-solid fa-weight-hanging"></i>
                     <div>
                         <span class="stat-title">Ocupação (Peso)</span>
@@ -116,10 +134,31 @@
                 </div>
             </div>
 
-            <div id="capacity-warning" style="display: none; position: absolute; z-index: 10; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--danger); padding: 12px 20px; border-radius: 8px; color: white; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 15px rgba(239,68,68,0.4); font-weight: 500; max-width: 90%; text-align: center;">
-                <i class="fa-solid fa-triangle-exclamation" style="flex-shrink: 0;"></i>
-                <span id="warning-text">O veículo não comporta a carga. Altere para um veículo maior.</span>
+            <div id="capacity-warning" class="warning-panel" style="display: none;">
+                <div class="warning-header">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Itens que não couberam</span>
+                </div>
+                <div id="warning-notice" class="warning-notice" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Limite de peso atingido!
+                </div>
+                <div class="warning-content">
+                    <table class="warning-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25px;"></th>
+                                <th>Item</th>
+                                <th style="text-align: center; width: 45px;">Qtd</th>
+                                <th style="text-align: right; width: 100px;">Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warning-items-list">
+                            <!-- Inserido via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
 
             <div id="canvas-container">
                 <div id="empty-state">

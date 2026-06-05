@@ -10,8 +10,11 @@ const unitTexts = document.querySelectorAll('.unit-text');
 const cargoList = document.getElementById('cargoList');
 const addCargoBtn = document.getElementById('addCargoBtn');
 const calculateBtn = document.getElementById('calculateBtn');
+const clearBtn = document.getElementById('clearBtn');
 const containerSelect = document.getElementById('containerSelect');
 const containerPresetsWrapper = document.getElementById('containerPresetsWrapper');
+const truckSelect = document.getElementById('truckSelect');
+const truckPresetsWrapper = document.getElementById('truckPresetsWrapper');
 const customContainerDim = document.getElementById('customContainerDim');
 const vehicleOptions = document.querySelectorAll('.vehicle-option');
 const vehicleDims = document.querySelectorAll('.vehicle-dim');
@@ -27,6 +30,17 @@ const containerPresets = {
     '20ft': { l: 589, w: 235, h: 239, weight: 24000 },
     '40ft': { l: 1203, w: 235, h: 239, weight: 26000 },
     '40hc': { l: 1203, w: 235, h: 269, weight: 28000 }
+};
+
+// Presets de Caminhão (em CM, pesos em kg)
+const truckPresets = {
+    'fiorino': { l: 170, w: 105, h: 105, weight: 500 },
+    'van': { l: 340, w: 180, h: 175, weight: 1500 },
+    'vuc': { l: 440, w: 205, h: 214, weight: 1800 },
+    '3_4_bau': { l: 610, w: 220, h: 224, weight: 3500 },
+    'toco_sider': { l: 650, w: 250, h: 290, weight: 6500 },
+    'toco_bau': { l: 810, w: 250, h: 260, weight: 6500 },
+    'truck_sider': { l: 1030, w: 250, h: 300, weight: 12000 }
 };
 
 // Alternância de Unidades
@@ -50,10 +64,10 @@ unitToggle.addEventListener('change', (e) => {
 });
 
 function convertAllValues(factor) {
-    // Inputs Container
-    contL.value = Math.round(parseFloat(contL.value) * factor);
-    contW.value = Math.round(parseFloat(contW.value) * factor);
-    contH.value = Math.round(parseFloat(contH.value) * factor);
+    // Inputs Container (evitar NaN se estiver em branco no modo personalizado)
+    if (contL.value) contL.value = Math.round(parseFloat(contL.value) * factor);
+    if (contW.value) contW.value = Math.round(parseFloat(contW.value) * factor);
+    if (contH.value) contH.value = Math.round(parseFloat(contH.value) * factor);
     
     // Inputs Cargas
     const items = document.querySelectorAll('.cargo-item');
@@ -62,14 +76,14 @@ function convertAllValues(factor) {
         const w = item.querySelector('.cargo-w');
         const h = item.querySelector('.cargo-h');
         
-        l.value = Math.round(parseFloat(l.value || 0) * factor);
-        w.value = Math.round(parseFloat(w.value || 0) * factor);
-        h.value = Math.round(parseFloat(h.value || 0) * factor);
+        if (l.value) l.value = Math.round(parseFloat(l.value || 0) * factor);
+        if (w.value) w.value = Math.round(parseFloat(w.value || 0) * factor);
+        if (h.value) h.value = Math.round(parseFloat(h.value || 0) * factor);
     });
 }
 
 // Lógica do Vehicle Selector (Container vs Caminhão)
-let activeVehicleType = 'container';
+let activeVehicleType = 'truck';
 
 vehicleOptions.forEach(opt => {
     opt.addEventListener('click', () => {
@@ -79,26 +93,14 @@ vehicleOptions.forEach(opt => {
         
         if (activeVehicleType === 'container') {
             containerPresetsWrapper.style.display = 'block';
-            vehicleDims.forEach(i => {
-                i.readOnly = true;
-                i.style.backgroundColor = 'rgba(255,255,255,0.05)';
-                i.style.color = 'var(--text-muted)';
-            });
-            // Refletir preset atual
+            truckPresetsWrapper.style.display = 'none';
             containerSelect.dispatchEvent(new Event('change'));
         } else {
             containerPresetsWrapper.style.display = 'none';
-            vehicleDims.forEach(i => {
-                i.readOnly = false;
-                i.style.backgroundColor = '';
-                i.style.color = '';
-            });
-            // Resetar para um caminhão padrão
-            const multiplier = isCm ? 1 : 10;
-            contL.value = 600 * multiplier;
-            contW.value = 240 * multiplier;
-            contH.value = 240 * multiplier;
-            contMaxW.value = 15000;
+            truckPresetsWrapper.style.display = 'block';
+            
+            // Garantir que a lógica de leitura/edição seja aplicada
+            truckSelect.dispatchEvent(new Event('change'));
         }
         liveUpdate();
     });
@@ -106,20 +108,61 @@ vehicleOptions.forEach(opt => {
 
 // Seleção de Preset de Container
 containerSelect.addEventListener('change', (e) => {
-    const preset = containerPresets[e.target.value];
-    if(preset) {
-        const multiplier = isCm ? 1 : 10;
-        contL.value = Math.round(preset.l * multiplier);
-        contW.value = Math.round(preset.w * multiplier);
-        contH.value = Math.round(preset.h * multiplier);
-        contMaxW.value = preset.weight;
+    const val = e.target.value;
+    if (val === 'custom') {
+        contL.value = '';
+        contW.value = '';
+        contH.value = '';
+        contMaxW.value = '';
+    } else {
+        const preset = containerPresets[val];
+        if(preset) {
+            const multiplier = isCm ? 1 : 10;
+            contL.value = Math.round(preset.l * multiplier);
+            contW.value = Math.round(preset.w * multiplier);
+            contH.value = Math.round(preset.h * multiplier);
+            contMaxW.value = preset.weight;
+        }
+    }
+    liveUpdate();
+});
+
+// Seleção de Preset de Caminhão
+truckSelect.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val === 'custom') {
+        contL.value = '';
+        contW.value = '';
+        contH.value = '';
+        contMaxW.value = '';
+    } else {
+        const preset = truckPresets[val];
+        if (preset) {
+            const multiplier = isCm ? 1 : 10;
+            contL.value = Math.round(preset.l * multiplier);
+            contW.value = Math.round(preset.w * multiplier);
+            contH.value = Math.round(preset.h * multiplier);
+            contMaxW.value = preset.weight;
+        }
     }
     liveUpdate();
 });
 
 // Atualização Reativa nas Mudanças Manuais
 vehicleDims.forEach(input => {
-    input.addEventListener('input', () => liveUpdate());
+    input.addEventListener('input', () => {
+        // Se o usuário editar diretamente as dimensões, muda o select correspondente para personalizado
+        if (activeVehicleType === 'truck') {
+            if (truckSelect.value !== 'custom') {
+                truckSelect.value = 'custom';
+            }
+        } else {
+            if (containerSelect.value !== 'custom') {
+                containerSelect.value = 'custom';
+            }
+        }
+        liveUpdate();
+    });
 });
 
 function liveUpdate() {
@@ -129,30 +172,149 @@ function liveUpdate() {
     }, 300); // debounce pequeno
 }
 
-// Inicializar container inicial
-containerSelect.dispatchEvent(new Event('change'));
+// Inicializar veiculo inicial
+const activeOpt = document.querySelector('.vehicle-option.active');
+if (activeOpt) {
+    activeOpt.dispatchEvent(new Event('click'));
+} else {
+    containerSelect.dispatchEvent(new Event('change'));
+}
 
-// Adição de Carga
-addCargoBtn.addEventListener('click', () => {
+// Botão Limpar Tudo
+clearBtn.addEventListener('click', () => {
+    // 1. Limpar cargas
+    cargoList.innerHTML = '';
+    addCargoBtn.click(); // Adiciona um item padrão
+    
+    // 2. Limpar veículo (se for caminhão, colocar personalizado e em branco)
+    if (activeVehicleType === 'truck') {
+        truckSelect.value = 'custom';
+        truckSelect.dispatchEvent(new Event('change'));
+    } else {
+        containerSelect.value = '20ft';
+        containerSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // 3. Resetar visualizador 3D
+    if (containerMesh) scene.remove(containerMesh);
+    boxesMeshes.forEach(mesh => scene.remove(mesh));
+    boxesMeshes = [];
+    containerMesh = null;
+    
+    // Mostrar empty state
+    const emptyState = document.getElementById('empty-state');
+    if (emptyState) emptyState.style.display = 'block';
+    
+    // Remover canvas antigo se houver
+    const canvas = document.querySelector('#canvas-container canvas');
+    if (canvas) canvas.remove();
+    renderer = null;
+    scene = null;
+    camera = null;
+    controls = null;
+    
+    // 4. Limpar avisos de capacidade
+    const warningBox = document.getElementById('capacity-warning');
+    if (warningBox) warningBox.style.display = 'none';
+    const warningList = document.getElementById('warning-items-list');
+    if (warningList) warningList.innerHTML = '';
+    const warningNotice = document.getElementById('warning-notice');
+    if (warningNotice) warningNotice.style.display = 'none';
+    const statBoxWeight = document.getElementById('stat-box-weight');
+    if (statBoxWeight) statBoxWeight.classList.remove('weight-warning');
+    
+    // 5. Resetar estatísticas
+    document.getElementById('stat-count').textContent = '0 / 0';
+    document.getElementById('stat-vol').textContent = '0.00%';
+    document.getElementById('stat-weight').textContent = '0 kg / 0 kg (0.00%)';
+});
+
+// Função auxiliar para adicionar item de carga com valores predefinidos
+function addCargoItem(name, w, h, d, q, weight, rotate, stackable, color) {
     const template = document.getElementById('cargo-template');
     const clo = template.content.cloneNode(true);
-    
     const cargoItemDiv = clo.querySelector('.cargo-item');
     
     // Botão de remover
     clo.querySelector('.btn-remove').addEventListener('click', () => {
         cargoItemDiv.remove();
+        liveUpdate();
     });
     
-    // Cor aleatória
-    const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
-    clo.querySelector('.cargo-color').value = randomColor;
+    // Preencher valores
+    clo.querySelector('.cargo-name').value = name;
+    clo.querySelector('.cargo-w').value = w;
+    clo.querySelector('.cargo-h').value = h;
+    clo.querySelector('.cargo-l').value = d;
+    clo.querySelector('.cargo-q').value = q;
+    clo.querySelector('.cargo-weight-val').value = weight;
+    clo.querySelector('.cargo-rotate').checked = rotate;
+    clo.querySelector('.cargo-stackable').checked = stackable;
+    clo.querySelector('.cargo-color').value = color;
+
+    // Vincular atualizações em tempo real a todos os campos deste item
+    const inputs = cargoItemDiv.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => liveUpdate());
+        input.addEventListener('change', () => liveUpdate());
+    });
 
     cargoList.appendChild(clo);
+}
+
+// Adição de Carga Manual via Botão
+addCargoBtn.addEventListener('click', () => {
+    // Paleta de cores para daltônicos (Okabe-Ito / Tol) - Alta distinção visual e contraste
+    const colorblindPalette = [
+        '#E69F00', // Laranja
+        '#56B4E9', // Azul Céu
+        '#009E73', // Verde Azulado
+        '#F0E442', // Amarelo
+        '#0072B2', // Azul Escuro
+        '#D55E00', // Vermelho Alaranjado
+        '#CC79A7', // Violeta Avermelhado
+        '#00E5FF', // Ciano Vibrante
+        '#FF5722', // Laranja Avermelhado
+        '#AEEA00', // Lima
+        '#B388FF'  // Violeta
+    ];
+    
+    // Buscar cores atualmente em uso na lista
+    const usedColors = Array.from(cargoList.querySelectorAll('.cargo-color')).map(el => el.value.toUpperCase());
+    
+    // Encontrar a primeira cor da paleta que não está sendo usada
+    let chosenColor = colorblindPalette.find(c => !usedColors.includes(c.toUpperCase()));
+    
+    // Se todas já estiverem em uso, rotacionar com base no número de itens
+    if (!chosenColor) {
+        const currentCount = cargoList.querySelectorAll('.cargo-item').length;
+        chosenColor = colorblindPalette[currentCount % colorblindPalette.length];
+    }
+    
+    addCargoItem('', 100, 100, 100, 10, 50, true, true, chosenColor);
+    liveUpdate();
 });
 
-// Iniciar com uma carga de exemplo
-addCargoBtn.click();
+// Inicializar com exemplo pré-preenchido de otimização de estufagem
+function initializeExample() {
+    // 1. Selecionar veículo VUC
+    truckSelect.value = 'vuc';
+    truckSelect.dispatchEvent(new Event('change'));
+    
+    // 2. Limpar qualquer carga inicial
+    cargoList.innerHTML = '';
+    
+    // 3. Adicionar cargas do exemplo que demonstram a otimização
+    addCargoItem('Palete Grande', 120, 100, 150, 4, 200, true, true, '#E69F00');
+    addCargoItem('Caixa Média', 80, 60, 50, 12, 45, true, true, '#56B4E9');
+    addCargoItem('Caixa Pequena', 40, 40, 40, 20, 15, true, true, '#009E73');
+    
+    // 4. Rodar o cálculo após o layout inicial do navegador
+    liveUpdate();
+}
+
+// Iniciar a aplicação com o exemplo preenchido
+initializeExample();
 
 // ----------------------------------------------------
 // LÓGICA DE BIN PACKING E THREE.JS
@@ -222,7 +384,7 @@ calculateBtn.addEventListener('click', () => {
     
     setTimeout(() => {
         try {
-            runPacking();
+            runPacking(true);
         } catch(e) {
             console.error(e);
             alert("Erro ao calcular: " + e.message);
@@ -244,58 +406,21 @@ class Space {
     }
 }
 
-function runPacking() {
-    // 1. Coletar dados do Container (Converter para CM para o cálculo interno, facilita)
-    const factorToCm = isCm ? 1 : 0.1;
-    const cW = getVal(contW.value) * factorToCm;
-    const cH = getVal(contH.value) * factorToCm;
-    const cD = getVal(contL.value) * factorToCm; // L = depth
-    const maxWeight = getVal(contMaxW.value);
+function singlePacking(items, cW, cH, cD, maxWeight, sortFunc, splitAxis = 0) {
+    // Fazer cópia profunda para não contaminar outras execuções
+    let localItems = items.map(x => ({ ...x }));
     
-    if(cW === 0 || cH === 0 || cD === 0) return alert("Dimensões do container inválidas.");
-
-    // 2. Coletar Cargas
-    let itemsToPack = [];
-    let boxesCount = 0;
+    // Ordenar conforme estratégia
+    localItems.sort(sortFunc);
     
-    const cargoDOMs = document.querySelectorAll('.cargo-item');
-    cargoDOMs.forEach(node => {
-        const name = node.querySelector('.cargo-name').value || "Carga";
-        const w = getVal(node.querySelector('.cargo-w').value) * factorToCm;
-        const h = getVal(node.querySelector('.cargo-h').value) * factorToCm;
-        const d = getVal(node.querySelector('.cargo-l').value) * factorToCm;
-        const q = parseInt(node.querySelector('.cargo-q').value) || 0;
-        const weight = getVal(node.querySelector('.cargo-weight-val').value);
-        const rotate = node.querySelector('.cargo-rotate').checked;
-        const color = node.querySelector('.cargo-color').value;
-        
-        boxesCount += q;
-        
-        for(let i=0; i<q; i++) {
-            itemsToPack.push({
-                id: Math.random().toString(),
-                name, w, h, d, weight, rotate, color, volume: w*h*d
-            });
-        }
-    });
-    
-    if(itemsToPack.length === 0) return alert("Adicione pelo menos uma carga.");
-
-    // Ordenar itens do maior volume para o menor
-    itemsToPack.sort((a,b) => b.volume - a.volume);
-
-    let freeSpaces = [new Space(0,0,0, cW, cH, cD)];
+    let freeSpaces = [new Space(0, 0, 0, cW, cH, cD)];
     let packedItems = [];
     let currentWeight = 0;
-    
-    // Lista de itens que falharam no empacotamento
     let failedItems = [];
-
-    // Empacotamento
-    for(const item of itemsToPack) {
+    
+    for(const item of localItems) {
         if(currentWeight + item.weight > maxWeight) {
-            // Peso excedido, pula o item
-            failedItems.push({ name: item.name, reason: 'weight' });
+            failedItems.push({ name: item.name, color: item.color, reason: 'weight' });
             continue; 
         }
 
@@ -303,14 +428,12 @@ function runPacking() {
         let bestSpaceIndex = -1;
         let finalW, finalH, finalD;
         
-        // Gerar rotações permitidas
-        // A pedido do usuário: girar apenas no eixo Y (largura x comprimento). NUNCA deitar ou virar de ponta cabeça.
+        // Rotações permitidas (apenas no plano Y - comprimento x largura)
         let rotations = [ [item.w, item.h, item.d] ];
         if(item.rotate) {
             rotations.push([item.d, item.h, item.w]);
         }
 
-        // Achar o espaço mais embaixo e mais no fundo possível (Min Y, Min Z, Min X)
         for(let i = 0; i < freeSpaces.length; i++) {
             let space = freeSpaces[i];
             
@@ -321,7 +444,6 @@ function runPacking() {
                         bestSpaceIndex = i;
                         finalW = rw; finalH = rh; finalD = rd;
                     } else {
-                        // Comparar com o best anterior para pegar o melhor (heuristic)
                         let bestSpace = freeSpaces[bestSpaceIndex];
                         if(space.y < bestSpace.y || (space.y === bestSpace.y && space.z < bestSpace.z)) {
                             bestSpaceIndex = i;
@@ -347,54 +469,232 @@ function runPacking() {
             });
             currentWeight += item.weight;
 
-            // Split do espaço restante (Cria 3 novos espaços em volta da caixa inserida)
-            // 1. Espaço Acima (Top)
-            if(space.h - finalH > 0) {
+            // Dividir espaço restante com base no eixo escolhido
+            // 1. Espaço Acima (Top) - Apenas se o item for empilhável!
+            if(item.stackable && space.h - finalH > 0) {
                 freeSpaces.push(new Space(space.x, space.y + finalH, space.z, finalW, space.h - finalH, finalD));
             }
-            // 2. Espaço ao Lado (Right)
-            if(space.w - finalW > 0) {
-                freeSpaces.push(new Space(space.x + finalW, space.y, space.z, space.w - finalW, space.h, finalD));
-            }
-            // 3. Espaço a Frente (Front)
-            if(space.d - finalD > 0) {
-                freeSpaces.push(new Space(space.x, space.y, space.z + finalD, space.w, space.h, space.d - finalD));
-            }
             
-            // Opcional: Consolidação de espaços vazios seria ideal, mas pra MVP tá ok.
+            if (splitAxis === 0) {
+                // Divisão A: Otimizar largura (lado a lado primeiro)
+                if(space.w - finalW > 0) {
+                    freeSpaces.push(new Space(space.x + finalW, space.y, space.z, space.w - finalW, space.h, space.d));
+                }
+                if(space.d - finalD > 0) {
+                    freeSpaces.push(new Space(space.x, space.y, space.z + finalD, finalW, space.h, space.d - finalD));
+                }
+            } else {
+                // Divisão B: Otimizar profundidade (frente/fundo primeiro)
+                if(space.w - finalW > 0) {
+                    freeSpaces.push(new Space(space.x + finalW, space.y, space.z, space.w - finalW, space.h, finalD));
+                }
+                if(space.d - finalD > 0) {
+                    freeSpaces.push(new Space(space.x, space.y, space.z + finalD, space.w, space.h, space.d - finalD));
+                }
+            }
         } else {
-            failedItems.push({ name: item.name, reason: 'space' });
+            failedItems.push({ name: item.name, color: item.color, reason: 'space' });
         }
     }
+
+    let totalPackedVolume = 0;
+    packedItems.forEach(i => totalPackedVolume += (i.w * i.h * i.d));
+
+    return {
+        packedItems,
+        failedItems,
+        currentWeight,
+        packedVolume: totalPackedVolume,
+        packedCount: packedItems.length
+    };
+}
+
+function runPacking(showAlerts = false) {
+    // 1. Coletar dados do Veículo (Converter para CM para o cálculo interno, facilita)
+    const factorToCm = isCm ? 1 : 0.1;
+    const cW = getVal(contW.value) * factorToCm;
+    const cH = getVal(contH.value) * factorToCm;
+    const cD = getVal(contL.value) * factorToCm; // L = depth
+    const maxWeight = getVal(contMaxW.value);
+    
+    if(cW === 0 || cH === 0 || cD === 0) {
+        if (showAlerts) alert("Dimensões do veículo inválidas.");
+        return;
+    }
+
+    // 2. Coletar Cargas
+    let itemsToPack = [];
+    let boxesCount = 0;
+    
+    const cargoDOMs = document.querySelectorAll('.cargo-item');
+    cargoDOMs.forEach(node => {
+        const name = node.querySelector('.cargo-name').value || "Carga";
+        const w = getVal(node.querySelector('.cargo-w').value) * factorToCm;
+        const h = getVal(node.querySelector('.cargo-h').value) * factorToCm;
+        const d = getVal(node.querySelector('.cargo-l').value) * factorToCm;
+        const q = parseInt(node.querySelector('.cargo-q').value) || 0;
+        const weight = getVal(node.querySelector('.cargo-weight-val').value);
+        const rotate = node.querySelector('.cargo-rotate').checked;
+        const stackable = node.querySelector('.cargo-stackable').checked;
+        const color = node.querySelector('.cargo-color').value;
+        
+        boxesCount += q;
+        
+        for(let i=0; i<q; i++) {
+            itemsToPack.push({
+                id: Math.random().toString(),
+                name, w, h, d, weight, rotate, stackable, color, volume: w*h*d
+            });
+        }
+    });
+    
+    if(itemsToPack.length === 0) {
+        if (showAlerts) alert("Adicione pelo menos uma carga.");
+        return;
+    }
+
+    // Estratégias de Ordenação para Otimização (8 estratégias)
+    const sortingStrategies = [
+        { name: 'Ordem de Entrada', sort: () => 0 },
+        { name: 'Volume Desc', sort: (a,b) => b.volume - a.volume },
+        { name: 'Altura Desc', sort: (a,b) => b.h - a.h },
+        { name: 'Área Base Desc', sort: (a,b) => (b.w * b.d) - (a.w * a.d) },
+        { name: 'Maior Lado Desc', sort: (a,b) => Math.max(b.w, b.h, b.d) - Math.max(a.w, a.h, a.d) },
+        { name: 'Comprimento Desc', sort: (a,b) => b.d - a.d },
+        { name: 'Largura Desc', sort: (a,b) => b.w - a.w },
+        { name: 'Volume Asc', sort: (a,b) => a.volume - b.volume }
+    ];
+
+    let bestResult = null;
+    let bestStrategyName = '';
+
+    // Testar as 8 estratégias com os 2 métodos de divisão de espaço (total de 16 combinações!)
+    for (const strategy of sortingStrategies) {
+        for (let splitAxis of [0, 1]) {
+            const result = singlePacking(itemsToPack, cW, cH, cD, maxWeight, strategy.sort, splitAxis);
+            if (!bestResult) {
+                bestResult = result;
+                bestStrategyName = `${strategy.name} (Split ${splitAxis})`;
+            } else {
+                // Escolhe a estratégia que ocupar MAIOR volume (melhor aproveitamento de espaço do veículo)
+                if (result.packedVolume > bestResult.packedVolume) {
+                    bestResult = result;
+                    bestStrategyName = `${strategy.name} (Split ${splitAxis})`;
+                }
+                // Em caso de empate no volume ocupado, escolhe a que colocar MAIS caixas (maior quantidade de itens)
+                else if (result.packedVolume === bestResult.packedVolume && result.packedCount > bestResult.packedCount) {
+                    bestResult = result;
+                    bestStrategyName = `${strategy.name} (Split ${splitAxis})`;
+                }
+            }
+        }
+    }
+
+    const { packedItems, failedItems, currentWeight } = bestResult;
 
     render3D(cW, cH, cD, packedItems);
     updateStats(boxesCount, packedItems.length, cW*cH*cD, packedItems, currentWeight, maxWeight);
     
-    // Banner de Aviso: Por que não coube?
+    // Banner de Aviso: Por que não coube ou se o peso está saturado
     const warningBox = document.getElementById('capacity-warning');
-    const warningMsg = document.getElementById('warning-text');
+    const warningList = document.getElementById('warning-items-list');
+    const warningHeader = warningBox.querySelector('.warning-header');
+    const warningContent = warningBox.querySelector('.warning-content');
+    const warningNotice = document.getElementById('warning-notice');
+    const statBoxWeight = document.getElementById('stat-box-weight');
     
-    if (failedItems.length > 0) {
-        warningBox.style.display = 'flex';
+    const isWeightSaturated = maxWeight > 0 && currentWeight >= maxWeight;
+    const weightBlocked = failedItems.some(f => f.reason === 'weight') || isWeightSaturated;
+    
+    if (failedItems.length > 0 || isWeightSaturated) {
+        warningBox.style.display = 'block';
         
-        // Agrupar falhas por nome do item e motivo
-        const summaryMap = {};
-        for (const f of failedItems) {
-            const key = `${f.name}|${f.reason}`;
-            if (!summaryMap[key]) {
-                summaryMap[key] = { name: f.name, reason: f.reason, count: 0 };
+        if (failedItems.length > 0) {
+            if (warningHeader) warningHeader.style.display = 'flex';
+            if (warningContent) warningContent.style.display = 'block';
+            warningList.innerHTML = '';
+            
+            // Agrupar falhas por nome do item, cor e motivo
+            const summaryMap = {};
+            for (const f of failedItems) {
+                const key = `${f.name}|${f.color}|${f.reason}`;
+                if (!summaryMap[key]) {
+                    summaryMap[key] = { name: f.name, color: f.color, reason: f.reason, count: 0 };
+                }
+                summaryMap[key].count++;
             }
-            summaryMap[key].count++;
+            
+            Object.values(summaryMap).forEach(f => {
+                const tr = document.createElement('tr');
+                
+                // Coluna Cor
+                const tdColor = document.createElement('td');
+                const colorDot = document.createElement('span');
+                colorDot.className = 'warning-color-dot';
+                colorDot.style.backgroundColor = f.color;
+                tdColor.appendChild(colorDot);
+                
+                // Coluna Item
+                const tdName = document.createElement('td');
+                tdName.textContent = f.name;
+                tdName.style.fontWeight = '500';
+                
+                // Coluna Qtd
+                const tdCount = document.createElement('td');
+                tdCount.textContent = f.count;
+                tdCount.style.textAlign = 'center';
+                tdCount.style.fontWeight = '600';
+                
+                // Coluna Motivo
+                const tdReason = document.createElement('td');
+                tdReason.style.textAlign = 'right';
+                const reasonSpan = document.createElement('span');
+                reasonSpan.className = `warning-reason ${f.reason}`;
+                reasonSpan.textContent = f.reason === 'weight' ? 'Excesso Peso' : 'Falta Espaço';
+                tdReason.appendChild(reasonSpan);
+                
+                tr.appendChild(tdColor);
+                tr.appendChild(tdName);
+                tr.appendChild(tdCount);
+                tr.appendChild(tdReason);
+                
+                warningList.appendChild(tr);
+            });
+        } else {
+            // Se tudo coube mas o peso está saturado, esconde cabeçalho e tabela de itens que não couberam
+            if (warningHeader) warningHeader.style.display = 'none';
+            if (warningContent) warningContent.style.display = 'none';
+            warningList.innerHTML = '';
         }
-        
-        const reasonsList = Object.values(summaryMap).map(f => {
-            const reasonStr = f.reason === 'weight' ? 'excesso de peso' : 'falta de espaço';
-            return `${f.count}x "${f.name}" (${reasonStr})`;
-        });
-        
-        warningMsg.textContent = `Atenção: Não coube(ram): ${reasonsList.join(', ')}. Tente um veículo maior ou ajuste as cargas.`;
     } else {
         warningBox.style.display = 'none';
+        warningList.innerHTML = '';
+    }
+
+    // Alertas específicos de peso saturado
+    if (weightBlocked) {
+        if (statBoxWeight) statBoxWeight.classList.add('weight-warning');
+        
+        let percentageText = ((currentWeight / maxWeight) * 100).toFixed(2) + '%';
+        const currentWStr = Math.round(currentWeight).toLocaleString('pt-BR');
+        const maxWStr = Math.round(maxWeight).toLocaleString('pt-BR');
+        
+        if (isWeightSaturated) {
+            document.getElementById('stat-weight').textContent = `${currentWStr} kg / ${maxWStr} kg (${percentageText} - Ocupação Total)`;
+            if (warningNotice) {
+                warningNotice.style.display = 'flex';
+                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Ocupação total de peso (${currentWStr} kg de ${maxWStr} kg)!`;
+            }
+        } else {
+            document.getElementById('stat-weight').textContent = `${currentWStr} kg / ${maxWStr} kg (${percentageText} - Saturado)`;
+            if (warningNotice) {
+                warningNotice.style.display = 'flex';
+                warningNotice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Limite de peso atingido (${currentWStr} kg de ${maxWStr} kg)!`;
+            }
+        }
+    } else {
+        if (statBoxWeight) statBoxWeight.classList.remove('weight-warning');
+        if (warningNotice) warningNotice.style.display = 'none';
     }
 }
 
@@ -407,7 +707,9 @@ function updateStats(totalBoxes, packedBoxes, totalVol, packedItems, currentWeig
     document.getElementById('stat-vol').textContent = volPercent.toFixed(2) + '%';
     
     let wPercent = maxWeight > 0 ? (currentWeight / maxWeight) * 100 : 0;
-    document.getElementById('stat-weight').textContent = wPercent.toFixed(2) + '%';
+    const currentWStr = Math.round(currentWeight).toLocaleString('pt-BR');
+    const maxWStr = Math.round(maxWeight).toLocaleString('pt-BR');
+    document.getElementById('stat-weight').textContent = `${currentWStr} kg / ${maxWStr} kg (${wPercent.toFixed(2)}%)`;
 }
 
 function render3D(cW, cH, cD, packedItems) {
@@ -470,3 +772,4 @@ function render3D(cW, cH, cD, packedItems) {
     camera.position.set(maxDim*1.2, maxDim*0.8, maxDim*1.2);
     controls.target.set(0, 0, 0);
 }
+
